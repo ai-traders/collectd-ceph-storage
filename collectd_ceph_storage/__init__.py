@@ -230,11 +230,11 @@ class CollectdCephStorage(object):
                     self.ceph_pg_stats_interval)
                 self.dispatch_value(
                     osd_id, 'apply_latency_ms',
-                    osd['fs_perf_stat']['apply_latency_ms'],
+                    osd['perf_stat']['apply_latency_ms'],
                     self.ceph_pg_stats_interval)
                 self.dispatch_value(
                     osd_id, 'commit_latency_ms',
-                    osd['fs_perf_stat']['commit_latency_ms'],
+                    osd['perf_stat']['commit_latency_ms'],
                     self.ceph_pg_stats_interval)
 
     def read_ceph_pool(self):
