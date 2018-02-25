@@ -71,6 +71,7 @@ Install / Configuration
          Import "collectd_ceph_storage"
          <Module collectd_ceph_storage>
            CephCluster "ceph"
+           CephClientName "admin"
 
            CephRadosBench False
            CephRadosBenchInterval 60

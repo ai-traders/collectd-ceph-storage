@@ -38,6 +38,7 @@ class CollectdCephStorage(object):
         self.ceph_pg_stats_interval = 10
         self.ceph_pool_stats = False
         self.ceph_pool_stats_interval = 10
+        self.ceph_client_name = 'admin'
 
     def configure_callback(self, config):
         for node in config.children:
@@ -64,6 +65,8 @@ class CollectdCephStorage(object):
                 self.ceph_pg_stats_interval = int(float(val))
             elif node.key == 'CephPoolStatsInterval':
                 self.ceph_pool_stats_interval = int(float(val))
+            elif node.key == 'CephClientName':
+                self.ceph_client_name = 'client.' + val
             else:
                 collectd.warning(
                     'collectd-ceph-storage: Unknown config key: {}'
@@ -110,7 +113,7 @@ class CollectdCephStorage(object):
     def read_ceph_rados_bench(self):
         """Runs "rados bench" and collects latencies reported."""
         rados_bench_ran, output = self.run_command(
-                ['timeout', '30s', 'rados', '-p', 'rbd', 'bench', '10',
+                ['timeout', '30s', 'rados', '-n', self.ceph_client_name, '-p', 'rbd', 'bench', '10',
                     'write', '-t', '1', '-b', '65536', '2>/dev/null', '|',
                     'grep', '-i', 'latency', '|', 'awk',
                     '\'{print 1000*$3}\''], False)
@@ -134,7 +137,7 @@ class CollectdCephStorage(object):
     def read_ceph_mon(self):
         """Reads stats from "ceph mon dump" command."""
         mon_dump_ran, output = self.run_command(
-                ['ceph', 'mon', 'dump', '-f', 'json', '--cluster',
+                ['ceph', '-n', self.ceph_client_name, 'mon', 'dump', '-f', 'json', '--cluster',
                     self.ceph_cluster])
 
         if mon_dump_ran:
@@ -150,7 +153,7 @@ class CollectdCephStorage(object):
     def read_ceph_osd(self):
         """Reads stats from "ceph osd dump" command."""
         osd_dump_ran, output = self.run_command(
-                ['ceph', 'osd', 'dump', '-f', 'json', '--cluster',
+                ['ceph', '-n', self.ceph_client_name, 'osd', 'dump', '-f', 'json', '--cluster',
                     self.ceph_cluster])
 
         if osd_dump_ran:
@@ -198,7 +201,7 @@ class CollectdCephStorage(object):
     def read_ceph_pg(self):
         """Reads stats from "ceph pg dump" command."""
         pg_dump_ran, output = self.run_command(
-                ['ceph', 'pg', 'dump', '-f', 'json', '--cluster',
+                ['ceph', '-n', self.ceph_client_name, 'pg', 'dump', '-f', 'json', '--cluster',
                     self.ceph_cluster])
 
         if pg_dump_ran:
@@ -240,8 +243,8 @@ class CollectdCephStorage(object):
     def read_ceph_pool(self):
         """Reads stats from "ceph osd pool" and "ceph df" commands."""
         stats_ran, stats_output = self.run_command(
-                ['ceph', 'osd', 'pool', 'stats', '-f', 'json'])
-        df_ran, df_output = self.run_command(['ceph', 'df', '-f', 'json'])
+                ['ceph', '-n', self.ceph_client_name, 'osd', 'pool', 'stats', '-f', 'json'])
+        df_ran, df_output = self.run_command(['ceph', '-n', self.ceph_client_name, 'df', '-f', 'json'])
 
         if stats_ran:
             json_stats_data = json.loads(stats_output)
